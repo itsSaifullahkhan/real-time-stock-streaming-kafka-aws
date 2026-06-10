@@ -1,189 +1,153 @@
-# AWS MSK to Snowflake Real-Time Streaming Pipeline
+# Real-Time Stock Streaming Pipeline with Kafka and AWS
 
 ## Project Overview
 
-This project demonstrates a real-time data streaming pipeline using **AWS MSK**, **Apache Kafka**, **Snowflake Kafka Connector**, and **Snowflake**.
+This project demonstrates a real-time stock market data streaming pipeline using **Apache Kafka**, **Python**, and **AWS services**.
 
-The pipeline streams data from Kafka topics hosted on AWS MSK and continuously loads that data into Snowflake tables for analytics, reporting, and downstream processing.
+The pipeline simulates stock market data, streams it through Kafka, stores the processed data in **Amazon S3**, catalogs it using **AWS Glue**, and queries it using **Amazon Athena**.
 
-This project shows how real-time data can move from a Kafka-based streaming system into a cloud data warehouse using a production-style connector approach.
+This project shows how real-time data can be ingested, stored, and analyzed using a cloud-based data engineering architecture.
 
 ---
 
 ## Problem Statement
 
-Modern businesses need real-time access to data for analytics, monitoring, reporting, and decision-making. Traditional batch pipelines load data after a delay, which is not suitable for use cases where fresh data is important.
+Stock market data changes continuously, and businesses need fast access to fresh data for analysis, dashboards, and decision-making. Traditional batch processing is not always suitable for this type of data because it may introduce delays.
 
-The problem is to build a cloud-based real-time ingestion pipeline that can:
+The problem is to build a real-time data pipeline that can:
 
-* Stream data continuously from Kafka topics
-* Load streaming data automatically into Snowflake
-* Reduce manual batch loading
-* Support near real-time analytics
-* Store data in a scalable cloud warehouse
-* Create a reliable foundation for reporting and dashboards
+* Generate or simulate live stock market data
+* Stream data continuously using Kafka
+* Consume and store the streamed data
+* Save the data in a scalable cloud storage system
+* Make the data queryable for analytics
+* Support future dashboarding and reporting
 
-This project solves the problem by connecting **AWS MSK Kafka topics** with **Snowflake** using the **Snowflake Kafka Connector**.
+This project solves the problem by using **Apache Kafka** for streaming and **AWS S3, Glue, and Athena** for cloud storage and analytics.
 
 ---
 
 ## Solution
 
-The solution uses **AWS MSK** as the managed Kafka service and **Snowflake** as the cloud data warehouse.
+The solution uses a Python producer to simulate stock market records and send them to a Kafka topic. A Kafka consumer reads the records from the topic and stores them in Amazon S3.
 
-Data is produced into Kafka topics. The Snowflake Kafka Connector reads data from those Kafka topics and automatically writes the streaming data into Snowflake tables.
+AWS Glue is then used to create a data catalog for the stored files, and Amazon Athena is used to run SQL queries directly on the S3 data.
 
-The connector handles topic consumption, buffering, flushing, and writing data into Snowflake. This removes the need to manually export Kafka data and load it into the warehouse.
+This creates a simple but powerful real-time data pipeline from streaming ingestion to cloud analytics.
 
 ---
 
 ## Architecture
 
 ```text
-Data Producer
-     |
-     v
-AWS MSK Kafka Topic
-     |
-     v
-Snowflake Kafka Connector
-     |
-     v
-Snowflake Internal Stage / Pipe
-     |
-     v
-Snowflake Target Table
-     |
-     v
+Python Stock Data Producer
+          |
+          v
+Apache Kafka Topic on AWS EC2
+          |
+          v
+Python Kafka Consumer
+          |
+          v
+Amazon S3 Data Lake
+          |
+          v
+AWS Glue Data Catalog
+          |
+          v
+Amazon Athena SQL Queries
+          |
+          v
 Analytics / Reporting
 ```
 
 ### Architecture Diagram
 
-![Architecture Diagram](imgs/architecture.png)
+![Architecture Diagram](Architecture.jpg)
 
 ---
 
 ## Architecture Flow
 
-### 1. Data Producer
+### 1. Python Producer
 
-A data producer sends records into a Kafka topic.
-The producer can be:
+The producer simulates real-time stock market data and sends records to a Kafka topic.
 
-* A Python script
-* Kafka CLI producer
-* Application service
-* Event generator
-* Real-time data source
+The generated stock records may include fields such as:
 
-The producer is responsible for pushing event data into the Kafka topic.
+* Stock symbol
+* Price
+* Volume
+* Timestamp
+* Market movement
 
----
-
-### 2. AWS MSK Cluster
-
-AWS MSK is used as the managed Apache Kafka service.
-
-It handles:
-
-* Kafka broker management
-* Topic creation
-* Message storage
-* Streaming data movement
-* Kafka cluster operations
-
-Using AWS MSK removes the need to manually manage Kafka infrastructure from scratch.
+The producer is responsible for continuously pushing data into Kafka.
 
 ---
 
-### 3. VPC and Networking
+### 2. Apache Kafka on AWS EC2
 
-The AWS MSK cluster runs inside a VPC.
-Networking configuration is important because the connector and client machines must be able to communicate with the MSK brokers.
+Kafka is hosted on an AWS EC2 instance.
+Kafka acts as the streaming platform between the producer and consumer.
 
-This project includes VPC-related setup to support communication between:
-
-* EC2 instance
-* MSK cluster
-* Kafka tools
-* Snowflake connector
+Kafka is used because it can handle continuous event streams and allows data to move in real time between systems.
 
 ---
 
-### 4. EC2 Instance
+### 3. Python Consumer
 
-An EC2 instance is used for setup, configuration, and Kafka command execution.
+The consumer reads stock market records from the Kafka topic.
 
-EC2 can be used to:
+After consuming the data, it writes the records into Amazon S3 for cloud storage.
 
-* Connect with the MSK cluster
-* Create or test Kafka topics
-* Run Kafka CLI commands
-* Manage connector configuration files
-* Debug connectivity issues
+This step moves data from the streaming layer into the storage layer.
 
 ---
 
-### 5. Snowflake Kafka Connector
+### 4. Amazon S3 Data Lake
 
-The Snowflake Kafka Connector consumes messages from Kafka topics and writes them into Snowflake.
+Amazon S3 is used as the raw data storage layer.
 
-The connector is responsible for:
+S3 stores the consumed stock data files and acts as a cloud data lake. This makes the data scalable, durable, and available for analytics.
 
-* Reading data from Kafka topics
-* Mapping topics to Snowflake tables
-* Buffering records
-* Flushing records into Snowflake
-* Handling continuous ingestion
-* Using Snowflake authentication for secure access
+### Amazon S3 Stored Data Screenshot
+
+![Amazon S3 Stored Data](s3-data.png)
 
 ---
 
-### 6. Snowflake Data Warehouse
+### 5. AWS Glue Data Catalog
 
-Snowflake stores the streamed data in target tables.
+AWS Glue is used to detect and catalog the schema of the data stored in S3.
 
-After data reaches Snowflake, it can be used for:
+The Glue Data Catalog makes the S3 data understandable for query engines like Amazon Athena.
 
-* SQL analysis
-* Reporting
-* Dashboards
-* Data transformations
-* Downstream dbt models
-* Business intelligence workflows
+---
+
+### 6. Amazon Athena
+
+Amazon Athena is used to query the data stored in S3 using SQL.
+
+With Athena, the stock data can be analyzed without moving it into a traditional database.
+
+### Amazon Athena Query Result Screenshot
+
+![Amazon Athena Query Result](athena-data.png)
 
 ---
 
 ## Tech Stack
 
-| Category              | Tool / Service             |
-| --------------------- | -------------------------- |
-| Streaming Platform    | Apache Kafka               |
-| Managed Kafka Service | AWS MSK                    |
-| Cloud Provider        | AWS                        |
-| Compute               | AWS EC2                    |
-| Networking            | AWS VPC                    |
-| Data Warehouse        | Snowflake                  |
-| Connector             | Snowflake Kafka Connector  |
-| Authentication        | Private Key Authentication |
-| CLI Tools             | Kafka CLI                  |
-| Version Control       | GitHub                     |
-
----
-
-## Key Features
-
-* Real-time Kafka-to-Snowflake data streaming
-* AWS MSK managed Kafka cluster
-* Snowflake Kafka Connector integration
-* Kafka topic to Snowflake table mapping
-* Continuous data ingestion
-* Configurable buffering and flush interval
-* EC2-based setup and testing
-* Secure Snowflake authentication
-* Cloud-based streaming architecture
-* Scalable foundation for analytics and reporting
+| Category                | Tool / Service   |
+| ----------------------- | ---------------- |
+| Programming Language    | Python           |
+| Streaming Platform      | Apache Kafka     |
+| Cloud Compute           | AWS EC2          |
+| Cloud Storage           | Amazon S3        |
+| Data Catalog            | AWS Glue         |
+| Query Engine            | Amazon Athena    |
+| Development Environment | Jupyter Notebook |
+| Version Control         | GitHub           |
 
 ---
 
@@ -193,129 +157,130 @@ After data reaches Snowflake, it can be used for:
 .
 ├── imgs/
 │   ├── architecture.png
-│   ├── msk-connector.png
-│   ├── snowflake-table.png
-│   └── vpc-setup.png
+│   ├── s3-data.png
+│   └── athena-query-result.png
 │
-├── aws-msk-connector.txt
+├── notebooks/
+│   ├── producer.ipynb
+│   └── consumer.ipynb
+│
 └── README.md
 ```
 
 ---
 
-## Important File
+## Key Features
 
-### `aws-msk-connector.txt`
-
-This file contains the Snowflake Kafka Connector configuration.
-
-It includes configuration related to:
-
-* Kafka topics
-* Snowflake database
-* Snowflake schema
-* Snowflake table mapping
-* Connector class
-* Buffer size
-* Flush interval
-* Authentication method
-* Private key configuration
-
-Important: Do not expose real private keys, passwords, tokens, AWS credentials, or Snowflake account secrets in a public repository.
-
----
-
-## Connector Configuration Overview
-
-The Snowflake Kafka Connector configuration usually includes settings like:
-
-```properties
-connector.class=com.snowflake.kafka.connector.SnowflakeSinkConnector
-tasks.max=1
-topics=your_kafka_topic
-
-snowflake.url.name=your_snowflake_account_url
-snowflake.user.name=your_snowflake_user
-snowflake.private.key=your_private_key
-snowflake.database.name=your_database
-snowflake.schema.name=your_schema
-snowflake.topic2table.map=your_topic:your_table
-
-buffer.count.records=10000
-buffer.flush.time=60
-buffer.size.bytes=5000000
-```
-
-Note: The values above are only examples. Replace them with your own secure configuration values when running the project.
+* Real-time stock data simulation
+* Kafka producer and consumer workflow
+* Kafka broker hosted on AWS EC2
+* Streaming ingestion using Apache Kafka
+* Data storage in Amazon S3
+* Schema cataloging using AWS Glue
+* SQL analytics using Amazon Athena
+* Cloud-based data engineering architecture
+* Foundation for real-time dashboards and reporting
 
 ---
 
 ## How the Pipeline Works
 
-1. A Kafka topic is created inside AWS MSK.
-2. Data is produced into the Kafka topic.
-3. The Snowflake Kafka Connector is configured.
-4. The connector starts consuming data from the Kafka topic.
-5. Records are buffered by the connector.
-6. The connector flushes records into Snowflake.
-7. Snowflake stores the data in the target table.
-8. The data becomes available for SQL queries, dashboards, and downstream analytics.
+1. The Python producer generates simulated stock market data.
+2. The producer sends the data into an Apache Kafka topic.
+3. Kafka runs on an AWS EC2 instance.
+4. The Python consumer reads messages from the Kafka topic.
+5. The consumer writes the data into Amazon S3.
+6. AWS Glue catalogs the data stored in S3.
+7. Amazon Athena queries the S3 data using SQL.
+8. The final data can be used for analytics, dashboards, and reporting.
+
 
 ---
 
-## Screenshot
+## Example Business Questions
 
-### Architecture Diagram
+This pipeline can help answer questions such as:
 
-![Architecture Diagram](Architecture.jpg)
+* Which stock symbol has the highest price movement?
+* What is the average price of each stock?
+* How many records were streamed in a specific time period?
+* Which stocks had the highest trading volume?
+* How does stock price change over time?
+* How can real-time stock data be stored for future analysis?
 
 ---
 
-## Example Use Cases
+## Example Athena Queries
 
-This type of real-time pipeline can be used for:
+### View All Stock Records
 
-* Real-time financial transaction ingestion
-* Stock market event streaming
-* Clickstream analytics
-* IoT sensor data ingestion
-* Application log streaming
-* Fraud detection pipelines
-* Real-time customer activity tracking
-* Operational monitoring dashboards
-* Real-time reporting systems
+```sql
+SELECT *
+FROM stock_data
+LIMIT 10;
+```
+
+### Average Price by Stock Symbol
+
+```sql
+SELECT 
+    symbol,
+    AVG(price) AS average_price
+FROM stock_data
+GROUP BY symbol
+ORDER BY average_price DESC;
+```
+
+### Count Records by Stock Symbol
+
+```sql
+SELECT 
+    symbol,
+    COUNT(*) AS total_records
+FROM stock_data
+GROUP BY symbol
+ORDER BY total_records DESC;
+```
+
+### Highest Stock Price
+
+```sql
+SELECT 
+    symbol,
+    MAX(price) AS highest_price
+FROM stock_data
+GROUP BY symbol
+ORDER BY highest_price DESC;
+```
 
 ---
 
 ## Business Value
 
-This pipeline helps businesses move from delayed batch processing to near real-time data availability.
+This project demonstrates how real-time stock data can be collected, stored, and queried in a cloud environment.
 
-Key business benefits include:
+Business benefits include:
 
-* Faster reporting
-* Better real-time visibility
-* Reduced manual data loading
-* Scalable cloud-based ingestion
-* Centralized storage in Snowflake
-* Better support for dashboards and analytics
-* Improved decision-making using fresh data
+* Faster access to stock market data
+* Scalable cloud storage using S3
+* Real-time data ingestion using Kafka
+* Low-cost SQL analytics using Athena
+* Better support for dashboards and reporting
+* Foundation for financial analytics and alerting systems
 
 ---
 
 ## Challenges Faced
 
-Some key challenges in this project included:
+Some challenges in this project included:
 
-* Configuring AWS MSK correctly
-* Understanding MSK networking and VPC connectivity
-* Connecting EC2 with the MSK cluster
-* Setting up Kafka tools on EC2
-* Configuring the Snowflake Kafka Connector
-* Understanding topic-to-table mapping
-* Setting up private key authentication for Snowflake
-* Debugging connector deployment issues
-* Validating whether data was successfully loaded into Snowflake
+* Setting up Kafka on AWS EC2
+* Configuring Kafka producer and consumer correctly
+* Managing data flow from Kafka to S3
+* Understanding how streaming data differs from batch data
+* Setting up AWS Glue for schema cataloging
+* Querying raw S3 data using Athena
+* Organizing cloud services into one complete pipeline
 
 ---
 
@@ -323,15 +288,14 @@ Some key challenges in this project included:
 
 Through this project, I learned:
 
-* How AWS MSK works as a managed Kafka service
-* How Apache Kafka topics are used in real-time pipelines
-* How to connect Kafka with Snowflake
-* How the Snowflake Kafka Connector works
-* How topic-to-table mapping is configured
-* How connector buffering and flushing work
-* How Snowflake stores streamed data
-* How cloud networking affects streaming pipelines
-* How real-time pipelines are different from batch ETL pipelines
+* How Apache Kafka works in real-time data pipelines
+* How to build a Python Kafka producer
+* How to build a Python Kafka consumer
+* How to run Kafka on AWS EC2
+* How to store streamed data in Amazon S3
+* How AWS Glue catalogs data
+* How Amazon Athena queries S3 data
+* How real-time data pipelines are designed in cloud environments
 
 ---
 
@@ -339,26 +303,37 @@ Through this project, I learned:
 
 This project can be improved by adding:
 
-* Python producer script for sample data generation
-* Sample JSON event data
-* Kafka consumer for testing
-* Snowflake Streams and Tasks
-* dbt models for downstream transformation
-* Airflow orchestration
-* Monitoring and logging
-* Error handling and retry strategy
+* Real stock market API integration
+* Apache Airflow orchestration
+* Partitioned S3 storage by date and stock symbol
+* AWS Lambda for serverless processing
+* dbt models for data transformation
+* Power BI or Tableau dashboard
+* Error handling and logging
+* Docker setup for local Kafka testing
 * Terraform for infrastructure automation
-* Power BI dashboard on top of Snowflake data
-* CI/CD workflow for connector configuration validation
+* CI/CD pipeline for deployment
 
 ---
 
+## Security Notes
+
+Before making this project public, make sure:
+
+* No AWS access keys are uploaded
+* No secret credentials are visible
+* No private IP addresses are exposed
+* No AWS account IDs are visible in screenshots
+* No personal tokens are committed
+* Sensitive information is blurred or cropped from screenshots
+
+---
 
 ## Final Result
 
-This project successfully demonstrates a real-time streaming data pipeline from AWS MSK Kafka topics into Snowflake using the Snowflake Kafka Connector.
+This project successfully demonstrates a real-time data engineering pipeline using Kafka and AWS.
 
-It shows how streaming data can be continuously ingested into a cloud data warehouse and made available for analytics, reporting, and downstream processing.
+It shows how simulated stock market data can be streamed through Kafka, stored in Amazon S3, cataloged using AWS Glue, and queried using Amazon Athena for analytics.
 
 ---
 
@@ -368,4 +343,4 @@ It shows how streaming data can be continuously ingested into a cloud data wareh
 Cloud Data Engineer | BS Financial Technology Student
 
 * GitHub: [itsSaifullahkhan](https://github.com/itsSaifullahkhan)
-* LinkedIn: [Saifullah khan](https://www.linkedin.com/in/saifullah-khan-b4616225b/)
+* LinkedIn:[Saifullah khan](https://www.linkedin.com/in/saifullah-khan-b4616225b/)
