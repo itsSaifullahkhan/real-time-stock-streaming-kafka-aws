@@ -368,4 +368,4 @@ It shows how streaming data can be continuously ingested into a cloud data wareh
 Cloud Data Engineer | BS Financial Technology Student
 
 * GitHub: [itsSaifullahkhan](https://github.com/itsSaifullahkhan)
-* LinkedIn: [](https://www.linkedin.com/in/saifullah-khan-b4616225b/)
+* LinkedIn: [Saifullah khan](https://www.linkedin.com/in/saifullah-khan-b4616225b/)
